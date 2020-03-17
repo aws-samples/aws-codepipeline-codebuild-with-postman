@@ -1,0 +1,16 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  PetStoreAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      DefinitionUri: petstore-swagger.json
+    
+Outputs:
+
+    PetStoreAPI:
+      Description: "Root API endpoint URL for Prod stage"
+      Value: !Sub "https://${PetStoreAPI}.execute-api.${AWS::Region}.amazonaws.com/prod"
+      Export:
+        Name: PetStoreAPIRoot

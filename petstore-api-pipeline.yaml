@@ -1,0 +1,399 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Code pipeline for automated api functional testing
+
+Parameters:
+
+  GitHubRepositoryName:
+    Type: String
+    Description: GitHub repository name.
+    MinLength: 1
+    MaxLength: 100
+  GitHubUser:
+    Type: String
+  GitHubBranch:
+    Type: String
+  GitHubToken:
+    Type: String
+    Description: repository token.
+    NoEcho: true
+  BucketRoot:
+    Type: String
+    Description: bucket containing project artifacts e.g. postman config files, etc.
+    MinLength: 1
+    MaxLength: 100
+
+Resources:
+
+  CodePipelineTrustRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName:
+        Fn::Sub: ${AWS::StackName}-CodePipelineRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        -
+          Effect: "Allow"
+          Principal:
+            Service:
+            - "codepipeline.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: /
+      #TODO: scope resources
+      Policies:
+      -
+        PolicyName:
+          Fn::Sub: ${AWS::StackName}-CodePipelineRolePolicy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          -
+            Effect: "Allow"
+            Action:
+            - "s3:DeleteObject"
+            - "s3:GetObject"
+            - "s3:GetObjectVersion"
+            - "s3:ListBucket"
+            - "s3:PutObject"
+            - "s3:GetBucketPolicy"
+            Resource: '*'
+          -
+            Effect: "Allow"
+            Action:
+            - "codebuild:StartBuild"
+            - "codebuild:BatchGetBuilds"
+            Resource: '*'
+          -
+            Effect: "Allow"
+            Action:
+            - "cloudformation:DescribeStacks"
+            - "cloudformation:DescribeChangeSet"
+            - "cloudformation:CreateStack"
+            - "cloudformation:DeleteStack"
+            - "cloudformation:UpdateStack"
+            - "cloudformation:CreateChangeSet"
+            - "cloudformation:DeleteChangeSet"
+            - "cloudformation:ExecuteChangeSet"
+            - "cloudformation:SetStackPolicy"
+            - "cloudformation:ValidateTemplate"
+            - "iam:PassRole"
+            Resource: '*'
+
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: ${AWS::StackName}-CodeBuildServiceRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        -
+          Effect: "Allow"
+          Principal:
+            Service:
+            - "codebuild.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: /service-role/
+      Policies:
+      -
+        PolicyName:
+          Fn::Sub: ${AWS::StackName}-CodeBuildServiceRole-Policy
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action:
+              - "codebuild:CreateReportGroup"
+              - "codebuild:CreateReport"
+              - "codebuild:UpdateReport"
+              - "codebuild:BatchPutTestCases"
+            Resource:
+              - "*"
+          - Effect: "Allow"
+            Action:
+              - "cloudformation:DescribeStacks"
+            Resource:
+              - "*"
+          -
+            Effect: "Allow"
+            Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            Resource:
+            - Fn::Sub: arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
+          -
+            Effect: "Allow"
+            Action:
+            - "s3:PutObject"
+            - "s3:GetObject"
+            - "s3:GetObjectVersion"
+            - "s3:ListBucket"
+            Resource:
+            - Fn::Sub: arn:aws:s3:::${AWS::StackName}-codepipeline-artifact-bucket-${AWS::AccountId}/*
+            - Fn::Sub: arn:aws:s3:::${AWS::StackName}-codepipeline-artifact-bucket-${AWS::AccountId}
+            - Fn::Sub: arn:aws:s3:::${BucketRoot}/*
+            - Fn::Sub: arn:aws:s3:::${BucketRoot}
+          -
+            Effect: "Allow"
+            Action:
+            - "iam:PassRole"
+            Resource:
+            - "*"
+
+  CloudFormationTrustRole:
+    Type: 'AWS::IAM::Role'
+    Description: Creating service role in IAM for AWS CloudFormation
+    Properties:
+      Path: /
+      ManagedPolicyArns:
+      - 'arn:aws:iam::aws:policy/AdministratorAccess'
+      RoleName:
+        Fn::Sub: ${AWS::StackName}-CloudFormationTrustRole
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: 'sts:AssumeRole'
+          Effect: Allow
+          Principal:
+            Service:
+            - cloudformation.amazonaws.com
+
+  CodePipelineArtifactBucket:
+    DeletionPolicy: Delete
+    Type: 'AWS::S3::Bucket'
+    Description: S3 bucket for pipeline artifacts
+    Properties:
+      AccessControl: Private
+      BucketName:
+        Fn::Sub: ${AWS::StackName}-codepipeline-artifact-bucket-${AWS::AccountId}
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${AWS::StackName}-codepipeline-artifact-bucket
+
+  #code build - api deployment using SAM (see buildspec.yml)
+  PetStoreAPISAMCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: petstore-api-stack-project
+      Description: CodeBuild Project using AWS SAM to deploy PetStore API
+      ServiceRole:
+        Fn::GetAtt: [ CodeBuildServiceRole, Arn ]
+      Artifacts:
+        Type: S3
+        Location:
+          Ref: CodePipelineArtifactBucket
+        Name:
+          Fn::Sub: ${AWS::StackName}-petstore-api-stack-codebuild-project
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/nodejs:8.11.0
+      Source:
+        Location: !Join
+        - ''
+        - - 'https://github.com/'
+          - !Ref GitHubUser
+          - '/'
+          - !Ref GitHubRepositoryName
+        Type:  GITHUB
+        BuildSpec: 01api/petstore-api-buildspec.yml
+      TimeoutInMinutes: 10
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${AWS::StackName}-petstore-api-stack-project
+
+  #code build - api testing using Newman to execute Postman test def (see buildspec.yml)
+  PostmanNewmanCodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name:
+        Fn::Sub: ${AWS::StackName}-newman-project
+      Description: CodeBuild Project using newman cli to execute postman tests
+      ServiceRole:
+        Fn::GetAtt: [ CodeBuildServiceRole, Arn ]
+      Artifacts:
+        Type: S3
+        Location:
+          Ref: CodePipelineArtifactBucket
+        Name:
+          Fn::Sub: ${AWS::StackName}-newman-project
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:2.0
+        EnvironmentVariables:
+          - Name: S3_BUCKET
+            Type: PLAINTEXT
+            Value:
+              Fn::Sub: ${BucketRoot}
+      Source:
+        Location: !Join
+          - ''
+          - - 'https://github.com/'
+            - !Ref GitHubUser
+            - '/'
+            - !Ref GitHubRepositoryName
+        Type:  GITHUB
+        BuildSpec: 03codebuild/postman-newman-buildspec.yml
+      TimeoutInMinutes: 10
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Sub: ${AWS::StackName}-newman-project
+
+
+  PetStoreAPIPipeline:
+    Type: "AWS::CodePipeline::Pipeline"
+    DependsOn:
+      - PetStoreAPISAMCodeBuildProject
+    Properties:
+      Name: petstore-api-pipeline
+      RoleArn:
+        Fn::GetAtt: [ CodePipelineTrustRole, Arn ]
+      ArtifactStore:
+        Type: S3
+        Location: !Ref CodePipelineArtifactBucket
+      Stages:
+      - Name: Source
+        Actions:
+        - Name: CheckoutPetStoreAPISource
+          ActionTypeId:
+            Owner: ThirdParty
+            Category: Source
+            Version: 1
+            Provider: GitHub
+          Configuration:
+            Owner: !Ref GitHubUser
+            PollForSourceChanges: false
+            Repo: !Ref GitHubRepositoryName
+            Branch: !Ref GitHubBranch
+            OAuthToken: !Ref GitHubToken
+          InputArtifacts: []
+          OutputArtifacts:
+          - Name: 'PetStoreAPI-SourceArtifact'
+          RunOrder: 1
+
+      - Name: Build
+        Actions:
+        - Name: BuildPetStoreAPI
+          ActionTypeId:
+            Owner: AWS
+            Category: Build
+            Version: 1
+            Provider: CodeBuild
+          Configuration:
+            ProjectName: !Ref PetStoreAPISAMCodeBuildProject
+          InputArtifacts:
+          - Name: 'PetStoreAPI-SourceArtifact'
+          OutputArtifacts:
+          - Name: 'PetStoreAPI-BuildArtifact'
+          RunOrder: 1
+
+      - Name: Deploy
+        Actions:
+        - Name: GenerateChangeSet
+          ActionTypeId:
+            Owner: AWS
+            Category: Deploy
+            Version: 1
+            Provider: CloudFormation
+          Configuration:
+            TemplatePath: !Join
+            - ''
+            - - 'PetStoreAPI-BuildArtifact'
+              - '::01api/petstore-api-output.yaml'
+            ActionMode: CHANGE_SET_REPLACE
+            Capabilities: CAPABILITY_IAM
+            ChangeSetName: pipeline-changeset
+            RoleArn: !GetAtt
+            - CloudFormationTrustRole
+            - Arn
+            StackName: petstore-api-stack
+          InputArtifacts:
+          - Name: 'PetStoreAPI-BuildArtifact'
+          OutputArtifacts: []
+          RunOrder: 1
+
+        - Name: ExecuteChangeSet
+          ActionTypeId:
+            Owner: AWS
+            Category: Deploy
+            Version: 1
+            Provider: CloudFormation
+          Configuration:
+            ActionMode: CHANGE_SET_EXECUTE
+            ChangeSetName: pipeline-changeset
+            StackName: petstore-api-stack
+          InputArtifacts: []
+          OutputArtifacts: []
+          RunOrder: 2
+
+      # https://docs.aws.amazon.com/codepipeline/latest/userguide/actions-invoke-lambda-function.html
+      - Name: Test
+        Actions:
+        - Name: TestPetStoreAPI
+          ActionTypeId:
+            Owner: AWS
+            Category: Build
+            Version: 1
+            Provider: CodeBuild
+          Configuration:
+            ProjectName: !Ref PostmanNewmanCodeBuildProject
+          InputArtifacts:
+            - Name: 'PetStoreAPI-SourceArtifact'
+          OutputArtifacts:
+            - Name: 'PetStoreAPI-TestArtifact'
+          RunOrder: 1
+
+  PetStorePostmanPipelineRunnerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action:
+          - 'sts:AssumeRole'
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+      Path: /
+      Policies:
+      -
+        PolicyName: "root"
+        PolicyDocument:
+          Version: '2012-10-17' # Policy Document
+          Statement:
+          -
+            Effect: Allow
+            Action:
+            - s3:PutObject
+            - s3:PutObjectAcl
+            - s3:GetObject
+            - s3:GetObjectVersion
+            Resource:
+            - Fn::Sub: arn:aws:s3:::${BucketRoot}/*
+          -
+            Effect: Allow
+            Action:
+            - codepipeline:PutJobSuccessResult
+            - codepipeline:PutJobSuccessFailure
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+            - cloudformation:ListExports
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: 'arn:aws:logs:*:*:*'
