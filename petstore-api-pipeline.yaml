@@ -167,15 +167,13 @@ Resources:
     Properties:
       AccessControl: Private
       BucketName:
-        Fn::Sub: ${AWS::StackName}-codepipeline-artifact-bucket-${AWS::AccountId}
+        Fn::Sub: ${AWS::StackName}-codepipeline-artifact-bucket-apitest
       VersioningConfiguration:
         Status: Enabled
       Tags:
       - Key: Name
         Value:
-          'Fn::Transform':
           Fn::Sub: ${AWS::StackName}-codepipeline-artifact-bucket
-          Operation: lower
 
   #code build - api deployment using SAM (see buildspec.yml)
   PetStoreAPISAMCodeBuildProject:
