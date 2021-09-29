@@ -4,7 +4,7 @@ phases:
     commands:
       - cd 01api
       - aws cloudformation package --template-file petstore-api.yaml
-                                   --s3-bucket codedeploy-pipeline/apitest-pipeline
+                                   --s3-bucket codedeploy-pipeline
                                    --s3-prefix api-code
                                    --output-template-file petstore-api-output.yaml
 artifacts:
