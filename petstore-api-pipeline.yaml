@@ -166,14 +166,12 @@ Resources:
     Description: S3 bucket for pipeline artifacts
     Properties:
       AccessControl: Private
-      BucketName:
-        Fn::Sub: ${AWS::StackName}-codepipeline-artifact-bucket-apitest
+      BucketName: codepipeline-artifact-bucket-apitest
       VersioningConfiguration:
         Status: Enabled
       Tags:
       - Key: Name
-        Value:
-          Fn::Sub: ${AWS::StackName}-codepipeline-artifact-bucket
+        Value: codepipeline-artifact-bucket-apitest
 
   #code build - api deployment using SAM (see buildspec.yml)
   PetStoreAPISAMCodeBuildProject:
