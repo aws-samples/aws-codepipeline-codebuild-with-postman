@@ -3,11 +3,11 @@ phases:
   install:
     commands:
       - cd 01api
-      - aws cloudformation package --template-file petstore-api.yaml
+      - aws cloudformation package --template-file signosoft-api.yaml
                                    --s3-bucket codedeploy-pipeline
                                    --s3-prefix api-code
-                                   --output-template-file petstore-api-output.yaml
+                                   --output-template-file signosoft-api-output.yaml
 artifacts:
   type: zip
   files:
-    - 01api/petstore-api-output.yaml
+    - 01api/signosoft-api-output.yaml
