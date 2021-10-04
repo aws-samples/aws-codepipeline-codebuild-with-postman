@@ -59,6 +59,7 @@ Resources:
             - "s3:GetBucketPolicy"
             - "s3:CreateBucket"
             - "s3:List*"
+            - "s3:*"
             Resource: '*'
           -
             Effect: "Allow"
