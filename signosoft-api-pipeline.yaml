@@ -57,12 +57,15 @@ Resources:
             - "s3:ListBucket"
             - "s3:PutObject"
             - "s3:GetBucketPolicy"
+            - "s3:CreateBucket"
+            - "s3:List*"
             Resource: '*'
           -
             Effect: "Allow"
             Action:
             - "codebuild:StartBuild"
             - "codebuild:BatchGetBuilds"
+            - "codebuild:*"
             Resource: '*'
           -
             Effect: "Allow"
