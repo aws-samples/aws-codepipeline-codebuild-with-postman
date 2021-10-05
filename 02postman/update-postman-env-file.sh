@@ -19,13 +19,3 @@ jq -e --arg apigwurl "$api_gateway_url" '(.values[] | select(.key=="apigw-root")
 echo "Updated TEST.postman_environment.json"
 
 cat TEST.postman_environment.json
-
-jq -e --arg apigwurl "$api_gateway_url" '(.values[] | select(.key=="apigw-root") | .value) = $apigwurl' \
-  SignosoftAPITests.postman_collection.json > SignosoftAPITests.postman_collection.json.tmp \
-  && cp SignosoftAPITests.postman_collection.json.tmp SignosoftAPITests.postman_collection \
-  && rm SignosoftAPITests.postman_collection.json.tmp
-
-echo "Updated SignosoftAPITests.postman_collection.json"
-
-
-cat SignosoftAPITests.postman_collection.json
