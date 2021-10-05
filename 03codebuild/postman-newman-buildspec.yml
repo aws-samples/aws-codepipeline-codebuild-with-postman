@@ -10,7 +10,7 @@ phases:
       nodejs: 10
     commands: #https://learning.getpostman.com/docs/postman/collection-runs/command-line-integration-with-newman/
       - npm install -g newman
-      - npm install -g newman-reporter-html
+      - yum install -y jq
 
   pre_build:
     commands:
@@ -22,10 +22,10 @@ phases:
   build:
     commands:
       - echo Build started on `date` from dir `pwd`
-      - newman run SignosoftAPITests.postman_collection.json --environment TEST.postman_environment.json -r html
+      - newman run SignosoftAPITests.postman_collection.json --environment TEST.postman_environment.json -r junit
 
 reports:
-  HTMLReports: # CodeBuild will create a report group called "SurefireReports".
+  JUnitReports: # CodeBuild will create a report group called "SurefireReports".
     files: #Store all of the files
       - '**/*'
     base-directory: '02postman/newman' # Location of the reports
