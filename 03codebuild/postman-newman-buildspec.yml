@@ -14,8 +14,6 @@ phases:
 
   pre_build:
     commands:
-      # - aws s3 cp "s3://${S3_BUCKET}/postman-env-files/TEST.postman_environment.json" ./02postman/
-      # - aws s3 cp "s3://${S3_BUCKET}/postman-env-files/SignosoftAPITests.postman_collection.json" ./02postman/
       - cd ./02postman
       - ./update-postman-env-file.sh
 
