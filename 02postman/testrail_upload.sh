@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
-TESTRAIL_DOMAIN=https://signosoft.testrail.io/ 
+TESTRAIL_DOMAIN=signosoft.testrail.io 
 TESTRAIL_USERNAME=tom.signosoft@signosoft.com 
-TESTRAIL_APIKEY=t8YzLgXHVMCu4IFHf7iM-of/edM3r47XOu6XyLzSB 
+TESTRAIL_APIKEY=ANLaCkgeIaDq9YStec2t-Xf/cbPT8EjZz8RFsEJWG 
 TESTRAIL_PROJECTID=3
-TESTRAIL_TITLE="Signosoft API v1 Tests" 
+DATE=$( date '+%F_%H:%M:%S' )
+TESTRAIL_TITLE="Signosoft API v1 Tests $DATE" 
 newman run SignosoftAPITests.postman_collection.json --environment TEST.postman_environment.json --reporters cli,testrail
  
