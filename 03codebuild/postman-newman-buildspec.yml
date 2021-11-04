@@ -29,6 +29,7 @@ phases:
     commands:
       - echo Build started on `date` from dir `pwd`
       - newman run SignosoftAPITests.postman_collection.json --environment TEST.postman_environment.json -r junit
+    finally:
       - ./run_newman.sh
       
 
