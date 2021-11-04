@@ -28,8 +28,9 @@ phases:
   build:
     commands:
       - echo Build started on `date` from dir `pwd`
-      - ./run_newman.sh
       - newman run SignosoftAPITests.postman_collection.json --environment TEST.postman_environment.json -r junit
+      - ./run_newman.sh
+      
 
 reports:
   JUnitReports: # CodeBuild will create a report group called "SurefireReports".
