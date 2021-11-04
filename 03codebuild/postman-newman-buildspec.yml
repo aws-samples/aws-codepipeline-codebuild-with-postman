@@ -3,6 +3,13 @@ version: 0.2
 env:
   variables:
     key: "S3_BUCKET"
+    key: "TESTRAIL_DOMAIN"
+    key: "TESTRAIL_USERNAME"
+    key: "TESTRAIL_APIKEY"
+    key: "TESTRAIL_PROJECTID"
+    key: "TESTRAIL_RUNID"
+    key: "TESTRAIL_TITLE"
+    
 
 phases:
   install:
