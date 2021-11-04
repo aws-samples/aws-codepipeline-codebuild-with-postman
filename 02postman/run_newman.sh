@@ -7,6 +7,4 @@ TESTRAIL_PROJECTID=3
 TESTRAIL_RUNID=69 
 TESTRAIL_TITLE="Signosoft API v1 Tests" 
 newman run SignosoftAPITests.postman_collection.json --environment TEST.postman_environment.json --reporters cli,testrail
-
-
-done 
+ 
