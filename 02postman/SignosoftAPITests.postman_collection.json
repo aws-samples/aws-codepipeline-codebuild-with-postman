@@ -670,6 +670,75 @@
 			"name": "signatures",
 			"item": [
 				{
+					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"//jsonData\r",
+									"let  jsonData = pm.response.json();\r",
+									"\r",
+									"//schema to validate\r",
+									"const schema = {\r",
+									"        \"type\": \"object\",\r",
+									"        \"properties\":{\r",
+									"            \"token\": {\"type\": \"string\"},\r",
+									"            \"tokenExp\": {\"type\": \"number\"},\r",
+									"            \"tokenExpIn\": {\"type\": \"number\"},\r",
+									"            \"result\": {\"type\": \"string\"}\r",
+									"    },\r",
+									"        \"required\": [\"token\",\"tokenExp\", \"tokenExpIn\", \"result\"]\r",
+									"\r",
+									"    \r",
+									"};\r",
+									"\r",
+									"pm.test(\"C45 Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test('C46 Schema is valid', function () {\r",
+									"    pm.response.to.have.jsonSchema(schema);\r",
+									"});\r",
+									"\r",
+									"let responseData = pm.response.json();\r",
+									"pm.environment.set(\"token\", responseData.token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "login",
+									"value": "{{serverLogin}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{serverPassword}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{server}}/restServerLogin",
+							"host": [
+								"{{server}}"
+							],
+							"path": [
+								"restServerLogin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "uploadDocument 2 biometric signatures",
 					"event": [
 						{
