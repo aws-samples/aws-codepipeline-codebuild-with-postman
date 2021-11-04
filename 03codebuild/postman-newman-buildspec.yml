@@ -30,7 +30,7 @@ phases:
       - echo Build started on `date` from dir `pwd`
       - newman run SignosoftAPITests.postman_collection.json --environment TEST.postman_environment.json -r junit
     finally:
-      - ./testrai_upload.sh
+      - ./testrail_upload.sh
       
 
 reports:
