@@ -10,6 +10,7 @@ phases:
       nodejs: 10
     commands: #https://learning.getpostman.com/docs/postman/collection-runs/command-line-integration-with-newman/
       - npm install -g newman
+      - npm install -g newman-reporter-testrail
       - yum install -y jq
 
   pre_build:
@@ -20,6 +21,7 @@ phases:
   build:
     commands:
       - echo Build started on `date` from dir `pwd`
+      - ./run_newman.sh
       - newman run SignosoftAPITests.postman_collection.json --environment TEST.postman_environment.json -r junit
 
 reports:
