@@ -52,9 +52,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{apigw-root}}/pets",
+					"raw": "{{base_url}}/pets",
 					"host": [
-						"{{apigw-root}}"
+						"{{base_url}}"
 					],
 					"path": [
 						"pets"
@@ -121,9 +121,9 @@
 					"raw": "{\n\t\"type\":\"Lizzard\",\n\t\"price\": 3.50\n}"
 				},
 				"url": {
-					"raw": "{{apigw-root}}/pets",
+					"raw": "{{base_url}}/pets",
 					"host": [
-						"{{apigw-root}}"
+						"{{base_url}}"
 					],
 					"path": [
 						"pets"
@@ -180,9 +180,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{apigw-root}}/pets/3",
+					"raw": "{{base_url}}/pets/3",
 					"host": [
-						"{{apigw-root}}"
+						"{{base_url}}"
 					],
 					"path": [
 						"pets",
