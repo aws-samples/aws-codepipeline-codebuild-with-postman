@@ -4,7 +4,7 @@ Resources:
   PetStoreAPI:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: prod
+      StageName: dev
       DefinitionUri: petstore-swagger.json
     
 Outputs:
